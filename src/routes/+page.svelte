@@ -1,72 +1,62 @@
 <script lang="ts">
-  import initSync, { parseHeader } from "../demoparser/pkg/demoparser2.js";
+  import initSync from "../demoparser/pkg/demoparser2.js";
   import { Label } from "$lib/components/ui/label";
   import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
+  import { fileStore, headers } from "$lib/stores/file"
+	import Button from "$lib/components/ui/button/button.svelte";
+  import { Menu } from 'lucide-svelte'
+	import * as Card from "$lib/components/ui/card";
+  import * as Avatar from "$lib/components/ui/avatar";
 
   let files: FileList;
   let title: string = "Sam's Demo Player";
-  // let isLoading: boolean = false;
+  let isLoading: boolean = false;
 
-  onMount(() => {
-    initSync();
-  });
+  let playersButtonVariant: "default" | "outline" = "default";
+  let showPlayers: boolean = true;
+  let loadingPlayers: boolean = false;
 
-  const isValidHeadersResponse = (headers: unknown): headers is Map<string, string> => {
-    return headers instanceof Map;
-  }
-
-  $: if (files && files.length > 0) {
-    fileHandler(files[0]).then((v) => {
-      const headers = parseHeader(v);
-      if (!isValidHeadersResponse(headers)) {
-        throw new Error("Unable to Parse file")
-      }
-
-      const demoMapName = headers.get("map_name")
-      if (demoMapName) {
-        title = getMapName(demoMapName)
-      }
-    })
-    .catch((err: Error) => {
-      console.log(err)
-    })
-    .finally(() => {
-    })
-  }
-
-  const getMapName = (originalName: string): string => {
+  const getMapName = (originalName: string) => {
     switch (originalName) {
+      case 'de_mirage':
+        return "Mirage";
       case 'de_vertigo':
         return "Vertigo";
     }
   }
 
-  const fileHandler = async (file: File) => {
-    const chunks: Uint8Array[] = [];
-    const reader = file.stream().getReader();
+  onMount(() => {
+    initSync();
+  });
 
-    const readChunk = async () => {
-      const { done, value } = await reader.read();
-      return { done, value };
-    }
-    
-    let result = await readChunk();
-    while (!result.done && result.value) {
-      chunks.push(result.value);
-      result = await readChunk();
-      console.log('here')
-    }
-
-    const combinedUint8Array = new Uint8Array(
-      chunks.reduce((acc, chunk) => acc.concat(Array.from(chunk)), [] as number[])
-    );
-
-    return combinedUint8Array
+  $: if (files && files.length > 0) {
+    handleFile(files[0]).then()
   }
 
+  $: playersButtonVariant = showPlayers ? "default" : "outline"
 
+  headers.subscribe((v) => {
+    if (!v) return
 
+    const demoMapName = v.get("map_name")
+    if (demoMapName) {
+      title = getMapName(demoMapName) ?? "Unknown Map 🤔"
+    }
+  })
+
+  const handleFile = async (file: File) => {
+    if (!files || files.length === 0) return
+    isLoading = true
+    try {
+      console.log("Handling Upload")
+      const fileArray = new Uint8Array(await file.arrayBuffer())
+      fileStore.set(fileArray)
+    } finally {
+      console.log("Upload Handled")
+      isLoading = false
+    }
+  }
 </script>
 
 <div class="flex flex-col h-full center items-center">
@@ -75,18 +65,53 @@
 	</h1>
 
 	<div class="grow flex w-full max-w-sm justify-center items-center">
-		<div class="flex flex-col gap-1.5">
-			<Label for="demo">Demo</Label>
-			<input
-				id="demo"
-				type="file"
-				class={twMerge(
+		{#if !isLoading && !$fileStore}
+			<div class="flex flex-col gap-1.5">
+				<Label for="demo">Demo</Label>
+				<input
+					disabled={isLoading}
+					id="demo"
+					type="file"
+					class={twMerge(
         "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-foreground file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         )}
-				bind:files
-			/>
-		</div>
+					bind:files
+				/>
+			</div>
+		{/if}
+		{#if isLoading}
+			<p>Loading....</p>
+		{/if}
+		{#if !isLoading && $fileStore}
+			{#if showPlayers}
+				<div>
+					<Card.Root>
+						<Card.Header>
+							<Card.Title>Players</Card.Title>
+						</Card.Header>
+						<Card.Content>
+							<div class="flex flex-row items-center gap-2">
+								<Avatar.Root>
+									<Avatar.Fallback>CT</Avatar.Fallback>
+								</Avatar.Root>
+								<p>Player Name</p>
+							</div>
+						</Card.Content>
+					</Card.Root>
+				</div>
+			{/if}
+		{/if}
 	</div>
 
 	<div class="h-20" />
 </div>
+
+{#if $fileStore}
+	<div class="fixed top-4 left-4">
+		<div class="flex flex-col gap-1.5">
+			<Button variant={playersButtonVariant} on:click={() => showPlayers = !showPlayers}>
+				<Menu class="h-4 w-4" /> &nbsp; Players
+			</Button>
+		</div>
+	</div>
+{/if}
