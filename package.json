@@ -33,6 +33,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@square/svelte-store": "^1.0.17",
 		"@sveltejs/adapter-static": "^2.0.3",
 		"bits-ui": "^0.9.8",
 		"clsx": "^2.0.0",

@@ -170,11 +170,11 @@ export const gameStateAtTick = (
 
   const stateAtTick = gameTicks.get(tick)
   if (!stateAtTick) {
-    console.log(`nothing @ ${tick}`)
+    // console.log(`nothing @ ${tick}`)
     return
   }
-  console.log(`found @ ${tick}`)
-  console.log(stateAtTick)
+  // console.log(`found @ ${tick}`)
+  // console.log(stateAtTick)
 }
 
 export const arrayRange = (start: number, stop: number, step: number = 1) =>

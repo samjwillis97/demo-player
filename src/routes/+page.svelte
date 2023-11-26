@@ -8,6 +8,7 @@
   import { Menu } from 'lucide-svelte'
 	import PlayerList from "$lib/components/player-list.svelte";
 	import FooterBar from "$lib/components/footer-bar.svelte";
+  import TitleBar from "$lib/components/title-bar.svelte"
 
   let files: FileList;
   let title: string = "Sam's Demo Player";
@@ -60,7 +61,7 @@
 </script>
 
 <div class="flex flex-col h-full justify-center items-center">
-	<div class="grow-0 py-4 px-3">
+	<!-- <div class="grow-0 py-4 px-3">
 		<h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
 			{title}
 		</h1>
@@ -74,7 +75,8 @@
 				</h4>
 			</div>
 		{/if}
-	</div>
+	</div> -->
+	<TitleBar />
 
 	<div class="grow flex w-full max-w-sm justify-center items-center">
 		{#if !isLoading && !$fileStore}

@@ -24,4 +24,6 @@
   }
 </script>
 
-<div class="w-full h-10">Player Goes Here</div>
+{#if $rounds}
+	<div class="w-full h-10">Player Goes Here</div>
+{/if}

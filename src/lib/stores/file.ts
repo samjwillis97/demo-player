@@ -1,6 +1,7 @@
 import { derived, writable } from "svelte/store";
 import { parseEvents, parseHeader, parseTicks } from "../../demoparser/pkg/demoparser2";
 import { arrayRange, getPlayerInfoRoundStart, getRoundScores, teamNumberToLongString, teamNumberToString } from "$lib/helpers";
+import { asyncDerived } from "@square/svelte-store";
 
 export type fileRounds = {
   matchStartTick: number;
@@ -51,6 +52,20 @@ const tickEventsToTrack = [
 export const currentRound = writable(1);
 
 export const fileStore = writable<Uint8Array | undefined>();
+
+export const headersAsync = asyncDerived(fileStore, async ($file) => {
+  if (!$file) return undefined
+
+  const headers = parseHeader($file);
+  if (!isValidHeadersResponse(headers)) {
+    throw new Error("Unable to Parse file")
+  }
+
+  console.log("ASYNC HEADER")
+  console.log(headers)
+
+  return headers
+}, undefined)
 
 export const headers = derived(fileStore, (file) => {
   if (!file) return undefined
@@ -193,10 +208,26 @@ export const roundTicks = derived([fileStore, rounds, currentRound], ([file, rou
   return tickMap
 })
 
+export const scoresConst = derived([rounds, tickMap], ([rounds, tickMap]) => {
+  if (!rounds || !tickMap) return undefined
+
+  const scores = getRoundScores(rounds.roundEndEvents, tickMap)
+
+  console.log("SCORES Resolved")
+  console.log(scores)
+
+  return scores
+})
+
 export const scores = derived([rounds, tickMap], ([rounds, tickMap]) => {
   if (!rounds || !tickMap) return undefined
 
-  return getRoundScores(rounds.roundEndEvents, tickMap)
+  const scores = getRoundScores(rounds.roundEndEvents, tickMap)
+
+  console.log("SCORES Resolved")
+  console.log(scores)
+
+  return scores
 })
 
 export const playerState = derived([currentRound, rounds, roundTicks], (
@@ -207,7 +238,12 @@ export const playerState = derived([currentRound, rounds, roundTicks], (
   ]
 ) => {
   if (!rounds || !tickMap) return undefined
-  return getPlayerInfoRoundStart(currentRound, rounds, tickMap)
+  const players = getPlayerInfoRoundStart(currentRound, rounds, tickMap)
+
+  console.log("PLAYERS Resolved")
+  console.log(players)
+
+  return players
 })
 
 export const currentTeams = derived([currentRound, rounds], (
