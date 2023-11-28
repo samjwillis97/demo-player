@@ -9,7 +9,10 @@
 				class="w-12 px-3 py-2 text-center font-semibold even:bg-stone-900"
 				class:text-sky-500={score.winningSide === 'CT'}
 				class:text-amber-500={score.winningSide === 'T'}
-				on:click={() => currentRound.set(index + 1)}
+				on:click={() => {
+          console.log('setting Current Round')
+          currentRound.set(index + 1)
+        }}
 			>
 				{index + 1}
 			</button>

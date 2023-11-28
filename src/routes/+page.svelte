@@ -3,7 +3,7 @@
   import { Label } from "$lib/components/ui/label";
   import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-  import { fileStore, headers, scores, currentRound } from "$lib/stores/file"
+  import { asyncFile, currentRound, fileStore, roundTicks } from "$lib/stores/file"
 	import Button from "$lib/components/ui/button/button.svelte";
   import { Menu } from 'lucide-svelte'
 	import PlayerList from "$lib/components/player-list.svelte";
@@ -11,7 +11,6 @@
   import TitleBar from "$lib/components/title-bar.svelte"
 
   let files: FileList;
-  let title: string = "Sam's Demo Player";
   let isLoading: boolean = false;
 
   let playersButtonVariant: "default" | "outline" = "default";
@@ -19,16 +18,8 @@
   let showPlayers: boolean = true;
   let showNavigation: boolean = true;
 
-  const getMapName = (originalName: string) => {
-    switch (originalName) {
-      case 'de_mirage':
-        return "Mirage";
-      case 'de_vertigo':
-        return "Vertigo";
-    }
-  }
-
   onMount(() => {
+    console.log("ON MOUNT FUCKI")
     initSync();
   });
 
@@ -39,21 +30,17 @@
   $: playersButtonVariant = showPlayers ? "default" : "outline"
   $: showNavigationButtonVariant= showNavigation ? "default" : "outline"
 
-  headers.subscribe((v) => {
-    if (!v) return
-
-    const demoMapName = v.get("map_name")
-    if (demoMapName) {
-      title = getMapName(demoMapName) ?? "Unknown Map 🤔"
-    }
-  })
+  roundTicks.subscribe((v) => {
+        console.log('round tick sub')
+      })
 
   const handleFile = async (file: File) => {
     if (!files || files.length === 0) return
     isLoading = true
     try {
       const fileArray = new Uint8Array(await file.arrayBuffer())
-      fileStore.set(fileArray)
+      console.log("Boutta set fileStore")
+      asyncFile.set(fileArray)
     } finally {
       isLoading = false
     }
@@ -61,21 +48,6 @@
 </script>
 
 <div class="flex flex-col h-full justify-center items-center">
-	<!-- <div class="grow-0 py-4 px-3">
-		<h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-			{title}
-		</h1>
-		{#if $fileStore && $scores}
-			<div class="flex flex-row justify-between w-48">
-				<h4 class="scroll-m-20 text-xl font-semibold tracking-tight">
-					Round {$currentRound}
-				</h4>
-				<h4 class="scroll-m-20 text-xl font-semibold tracking-tight">
-					{$scores[$currentRound - 2]?.score ?? '0:0'}
-				</h4>
-			</div>
-		{/if}
-	</div> -->
 	<TitleBar />
 
 	<div class="grow flex w-full max-w-sm justify-center items-center">
@@ -92,6 +64,7 @@
 					bind:files
 				/>
 			</div>
+			<Button on:click={() => currentRound.update(v => v +1)}>Up</Button>
 		{/if}
 		{#if isLoading}
 			<p>Loading....</p>
@@ -100,14 +73,14 @@
 			{#if !isLoading && $fileStore}
 				{#if showPlayers}
 					<!-- I think I want this in the top left of this panel -->
-					<PlayerList />
+					<!-- <PlayerList /> -->
 				{/if}
 			{/if}
 		</div>
 	</div>
 
 	{#if !isLoading && fileStore && showNavigation}
-		<FooterBar />
+		<!-- <FooterBar /> -->
 	{/if}
 </div>
 

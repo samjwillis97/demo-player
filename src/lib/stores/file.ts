@@ -1,13 +1,32 @@
 import { derived, writable } from "svelte/store";
-import { parseEvents, parseHeader, parseTicks } from "../../demoparser/pkg/demoparser2";
+import  { parseEvents, parseHeader, parseTicks } from "../../demoparser/pkg/demoparser2";
 import { arrayRange, getPlayerInfoRoundStart, getRoundScores, teamNumberToLongString, teamNumberToString } from "$lib/helpers";
-import { asyncDerived } from "@square/svelte-store";
+import { asyncable, type Asyncable, type AsyncValue } from "svelte-asyncable";
+
+export type AsyncResponse<T> = AsyncError | AsyncWrapper<T>
+
+export type AsyncError = {
+  isError: true;
+  message: string;
+}
+
+export type AsyncWrapper<T> = {
+  isError: false;
+  data: T;
+}
 
 export type fileRounds = {
   matchStartTick: number;
   matchEndTick: number;
   roundStartEvents: Map<string, unknown>[];
   roundEndEvents: Map<string, unknown>[];
+}
+
+export interface roundInfo {
+  matchStartTick: number;
+  matchEndTick: number;
+  roundStartEvents: Map<string, unknown>[]
+  roundEndEvents: Map<string, unknown>[]
 }
 
 const isValidHeadersResponse = (headers: unknown): headers is Map<string, string> => {
@@ -49,23 +68,223 @@ const tickEventsToTrack = [
   "inventory"
 ];
 
-export const currentRound = writable(1);
+export const currentRound = writable(0);
 
-export const fileStore = writable<Uint8Array | undefined>();
+// let value: boolean = false
+let file: Uint8Array
 
-export const headersAsync = asyncDerived(fileStore, async ($file) => {
-  if (!$file) return undefined
+export const fileStore = writable<Uint8Array>();
 
-  const headers = parseHeader($file);
-  if (!isValidHeadersResponse(headers)) {
-    throw new Error("Unable to Parse file")
+export const asyncFile = asyncable(
+  async () => file,
+  async ($v: Uint8Array) => {
+    file = $v
   }
+)
 
-  console.log("ASYNC HEADER")
-  console.log(headers)
+export const headersAsync = asyncable<
+  AsyncResponse<Map<string, string>>,
+  [Asyncable<Uint8Array>]
+>(
+  async (v: AsyncValue<Uint8Array>) => {
+    const file = await v
+    if (!file) {
+      return {
+        isError: true,
+        message: "missing file"
+      }
+    }
 
-  return headers
-}, undefined)
+    const headers = parseHeader(file);
+    if (!isValidHeadersResponse(headers)) {
+      return {
+        isError: true,
+        message: "unable to parse file"
+      }
+    }
+
+    console.log("ASYNC HEADER")
+    console.log(headers)
+    currentRound.set(1)
+
+    return {
+      isError: false,
+      data: headers
+    }
+  },
+  undefined,
+  [asyncFile], 
+)
+
+export const asyncEvents = asyncable<
+  AsyncResponse<Map<string, unknown>[]>,
+  [Asyncable<Uint8Array>]
+>(
+  async(v: AsyncValue<Uint8Array>) => {
+    const file = await v
+    if (!file) return {
+      isError: true,
+      message: "missing file"
+    }
+
+    const allEvents = parseEvents(
+      file,
+      eventsToTrack, 
+      ['game_time', 'team_num']
+    )
+
+    if (!isValidEventResponse(allEvents)) return {
+      isError: true,
+      message: "unable to parse events"
+    }
+
+    console.log("ALL EVENTS")
+    console.log(allEvents)
+
+    return {
+      isError: false,
+      data: allEvents
+    }
+  },
+  undefined,
+  [asyncFile]
+)
+
+export const asyncRounds = asyncable<
+  AsyncResponse<roundInfo>,
+  [Asyncable<AsyncResponse<Map<string, unknown>[]>>]
+>(
+  async(v: AsyncValue<AsyncResponse<Map<string, unknown>[]>>) => {
+    const events = await v;
+    if (events.isError) return events
+
+    let matchStartTick = 0;
+    const roundStartEvents = [];
+    const roundEndEvents = [];
+
+    for (const event of events.data) {
+      if (!event || typeof event !== 'object') continue
+      const tick = event.get('tick')
+      switch (event.get('event_name')) {
+        case 'begin_match':
+          if (matchStartTick !== 0) break;
+          if (typeof tick !== 'number') break;
+          matchStartTick = tick;
+          break;
+        case 'round_start':
+          roundStartEvents.push(event)
+          break;
+        case 'round_end':
+          if (typeof tick !== 'number') break;
+          if (tick < matchStartTick) break;
+          roundEndEvents.push(event)
+          break;
+      }
+    }
+    const matchEndTick = Math.max(...roundEndEvents.map(e => e.get('tick') as number))
+
+    const rounds = {
+      matchStartTick,
+      matchEndTick,
+      roundStartEvents,
+      roundEndEvents,
+    }
+
+    console.log("ROUNDS")
+    console.log(rounds)
+
+    return {
+      isError: false,
+      data: rounds
+    }
+  },
+  undefined,
+  [asyncEvents]
+)
+
+export const asyncTickMap = asyncable<
+  AsyncResponse<Map<number, Map<string, unknown>[]>>,
+  [Asyncable<Uint8Array>, Asyncable<AsyncResponse<Map<string, unknown>[]>>]
+>(
+  async (asyncFile: AsyncValue<Uint8Array>, asyncEvents: AsyncValue<AsyncResponse<Map<string, unknown>[]>>) => {
+    const file = await asyncFile
+    const events = await asyncEvents
+
+    if (!file) return {
+      isError: true,
+      message: "Missing file"
+    }
+
+    if (events.isError) return events
+
+    const ticks = new Int32Array(events.data.map((e) => {
+        const tick = e.get('tick')
+        if (!tick || typeof tick !== 'number') return undefined
+        return tick
+      })
+      .filter((v) => v !== undefined) as number[])
+
+    const tickEvents = parseTicks(
+      file,
+      tickEventsToTrack,
+      ticks
+    );
+
+    if (!isValidTicksResponse(tickEvents)) return {
+      isError: true,
+      message: "Unable to parse ticks"
+    }
+
+    const tickMap = new Map<number, Map<string, unknown>[]>();
+    for (const event of tickEvents) {
+      const tick = event.get('tick')
+      if (typeof tick !== 'number') continue
+      const events = tickMap.get(tick)
+      if (!events) {
+        tickMap.set(tick, [event])
+      } else {
+        events.push(event)
+      }
+    }
+
+    console.log('Tick Events')
+    console.log(tickMap)
+
+    return {
+      isError: false,
+      data: tickMap
+    }
+  },
+  undefined,
+  [asyncFile, asyncEvents]
+)
+
+
+export const asyncScores = asyncable<
+AsyncResponse<{ score: string; winningSide: string; 2: number; 3: number }[]>,
+[Asyncable<AsyncResponse<roundInfo>>, Asyncable<AsyncResponse<Map<number, Map<string, unknown>[]>>>]
+>(
+  async (asyncRounds: AsyncValue<AsyncResponse<roundInfo>>, asyncTicks: AsyncValue<AsyncResponse<Map<number, Map<string, unknown>[]>>>) => {
+    const rounds = await asyncRounds;
+    const tickMap = await asyncTicks;
+
+    if (rounds.isError) return rounds;
+    if (tickMap.isError) return tickMap;
+ 
+    const scores = getRoundScores(rounds.data.roundEndEvents, tickMap.data)
+
+    console.log("SCORES Resolved")
+    console.log(scores)
+
+    return {
+      isError: false,
+      data: scores
+    }
+  },
+  undefined,
+  [asyncRounds, asyncTickMap]
+)
+
 
 export const headers = derived(fileStore, (file) => {
   if (!file) return undefined
@@ -173,40 +392,51 @@ export const rounds = derived(allEvents, (events) => {
   return rounds
 })
 
-export const roundTicks = derived([fileStore, rounds, currentRound], ([file, rounds, currentRound]) => {
-  if (!file || !rounds) return
-  const ticks = new Int32Array(
-    arrayRange(
-      rounds.roundStartEvents[currentRound - 1].get('tick') as number,
-      rounds.roundEndEvents[currentRound - 1].get('tick') as number
+export const roundTicks = asyncable(
+  async (
+    asyncFile: AsyncValue<Uint8Array>,
+    asyncRounds: AsyncValue<AsyncResponse<roundInfo>>,
+    currentRound: number
+  ) => {
+    console.log('starting round Ticks')
+    const file = await asyncFile;
+    const rounds = await asyncRounds
+    if (!file || rounds.isError) return
+    const ticks = new Int32Array(
+      arrayRange(
+        rounds.data.roundStartEvents[currentRound - 1].get('tick') as number,
+        rounds.data.roundEndEvents[currentRound - 1].get('tick') as number
+      )
     )
-  )
 
-  const tickEvents = parseTicks(
-    file,
-    tickEventsToTrack,
-    ticks
-  );
+    const tickEvents = parseTicks(
+      file,
+      tickEventsToTrack,
+      ticks
+    );
 
-  if (!isValidTicksResponse(tickEvents)) return undefined
+    if (!isValidTicksResponse(tickEvents)) return undefined
 
-  const tickMap = new Map<number, Map<string, unknown>[]>();
-  for (const event of tickEvents) {
-    const tick = event.get('tick')
-    if (typeof tick !== 'number') return undefined
-    const events = tickMap.get(tick)
-    if (!events) {
-      tickMap.set(tick, [event])
-    } else {
-      events.push(event)
+    const tickMap = new Map<number, Map<string, unknown>[]>();
+    for (const event of tickEvents) {
+      const tick = event.get('tick')
+      if (typeof tick !== 'number') return undefined
+      const events = tickMap.get(tick)
+      if (!events) {
+        tickMap.set(tick, [event])
+      } else {
+        events.push(event)
+      }
     }
-  }
 
-  console.log('Round Tick Events')
-  console.log(tickMap)
+    console.log('Round Tick Events')
+    console.log(tickMap)
 
-  return tickMap
-})
+    return tickMap
+  },
+  undefined,
+  [asyncFile, asyncRounds, currentRound], 
+)
 
 export const scoresConst = derived([rounds, tickMap], ([rounds, tickMap]) => {
   if (!rounds || !tickMap) return undefined
@@ -230,7 +460,7 @@ export const scores = derived([rounds, tickMap], ([rounds, tickMap]) => {
   return scores
 })
 
-export const playerState = derived([currentRound, rounds, roundTicks], (
+export const playerState = derived([currentRound, rounds, tickMap], (
   [
     currentRound,
     rounds,

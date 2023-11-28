@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { gameStateAtTick } from "$lib/helpers";
-	import { rounds, currentRound, roundTicks} from "$lib/stores/file";
+	import { rounds, currentRound } from "$lib/stores/file";
 
   let navigatorTick = 0
   let startTick = 0
@@ -16,10 +16,10 @@
       navigatorTick = startTick
 
       console.log(`Start: ${startTick}, End: ${endTick}, Total: ${totalTicks}`)
-      while (navigatorTick <= endTick && $roundTicks) {
-        gameStateAtTick(navigatorTick, $roundTicks)
-        navigatorTick++
-      }
+      // while (navigatorTick <= endTick && $roundTicks) {
+      //   gameStateAtTick(navigatorTick, $roundTicks)
+      //   navigatorTick++
+      // }
     }
   }
 </script>
