@@ -7,6 +7,11 @@ import type { fileRounds } from "./stores/file";
 // 3 = ct
 //
 // if you keep grabbing players with team = 2, it switches at halves
+//
+
+export function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 export const getRoundStartEvents = (round: number, rounds: fileRounds, tickEvents: Map<number, Map<string, unknown>[]>) => {
   if (round >= rounds.roundStartEvents.length || round <= 0) {

@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { asyncFile, asyncScores, currentRound, headersAsync } from "$lib/stores/file";
+  export let round = 0;
+  export let isLoading: boolean = false;
+  export let map: string | undefined;
+  export let score: string | undefined;
 
   let title: string = "Sam's Demo Player";
 
@@ -13,43 +16,31 @@
     return "Unknown Map: " + originalName
   }
 
-
 </script>
 
 <div class="grow-0 py-4 px-3">
 	<h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-		{#await $asyncFile}
-			{title}
-		{:then}
-			{#await $headersAsync}
-				Loading...
-			{:then headersAsync}
-				{#if !headersAsync.isError}
-					{getMapName(headersAsync.data.get('map_name') ?? '')}
-				{:else}
-					{title}
-				{/if}
-			{/await}
-		{/await}
+		{map ? getMapName(map) : isLoading ? 'Loading...' : title}
 	</h1>
 	<div class="flex flex-row justify-between w-48">
-		{#if $currentRound > 0}
+		{#if round > 0}
 			<h4 class="scroll-m-20 text-xl font-semibold tracking-tight">
-				Round {$currentRound}
+				Round {round}
 			</h4>
-			{#await $asyncScores then asyncScores}
+		{/if}
+
+		<!-- {#await $asyncScores then asyncScores}
 				{#if !asyncScores.isError}
 					<h4 class="scroll-m-20 text-xl font-semibold tracking-tight">
 						{asyncScores.data[$currentRound - 2]?.score ?? '0:0'}
 					</h4>
 				{/if}
-			{/await}
+			{/await} -->
 
-			<!--{#if $scores}
+		<!--{#if $scores}
 			<h4 class="scroll-m-20 text-xl font-semibold tracking-tight">
 				{gameScores[$currentRound - 2]?.score ?? '0:0'}
 			</h4>
     {/if} -->
-		{/if}
 	</div>
 </div>

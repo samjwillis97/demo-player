@@ -3,12 +3,15 @@
   import { Label } from "$lib/components/ui/label";
   import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-  import { asyncFile, currentRound, fileStore, roundTicks } from "$lib/stores/file"
+  import { getRoundScores, getEventTicks, getEvents, getHeaders, getRounds, getAllRoundTicks } from "$lib/utils/file"
+  import { fileStore } from "$lib/stores/file"
 	import Button from "$lib/components/ui/button/button.svelte";
   import { Menu } from 'lucide-svelte'
 	import PlayerList from "$lib/components/player-list.svelte";
 	import FooterBar from "$lib/components/footer-bar.svelte";
   import TitleBar from "$lib/components/title-bar.svelte"
+	import RoundIndicator from "$lib/components/round-indicator.svelte";
+	import type { roundScore, rounds } from "$lib/utils/types";
 
   let files: FileList;
   let isLoading: boolean = false;
@@ -19,36 +22,61 @@
   let showNavigation: boolean = true;
 
   onMount(() => {
-    console.log("ON MOUNT FUCKI")
     initSync();
   });
 
+  let currentRound: number = 0;
+  let fileArray: Uint8Array;
+  let headers: Map<string, string>;
+  let roundInfo: rounds;
+  let scores: roundScore[];
+
+  $: playersButtonVariant = showPlayers ? "default" : "outline";
+  $: showNavigationButtonVariant= showNavigation ? "default" : "outline";
+
+
   $: if (files && files.length > 0) {
-    handleFile(files[0]).then()
+    handleFile(files[0]).then();
   }
-
-  $: playersButtonVariant = showPlayers ? "default" : "outline"
-  $: showNavigationButtonVariant= showNavigation ? "default" : "outline"
-
-  roundTicks.subscribe((v) => {
-        console.log('round tick sub')
-      })
 
   const handleFile = async (file: File) => {
-    if (!files || files.length === 0) return
-    isLoading = true
+    if (!files || files.length === 0) return;
+    isLoading = true;
     try {
-      const fileArray = new Uint8Array(await file.arrayBuffer())
-      console.log("Boutta set fileStore")
-      asyncFile.set(fileArray)
+      fileArray = new Uint8Array(await file.arrayBuffer());
+
+      headers = getHeaders(fileArray);
+      currentRound = 1;
+
+      const events = getEvents(fileArray)
+      const eventTicks = getEventTicks(fileArray, events)
+
+      roundInfo = getRounds(events);
+      scores = getRoundScores(roundInfo, eventTicks)
+
     } finally {
-      isLoading = false
+      isLoading = false;
     }
   }
+
+  const handleFooterClick = async (event: CustomEvent<{target: 'round-navigator'; round: number }> ) => {
+    switch (event.detail.target) {
+      case 'round-navigator':
+        currentRound = event.detail.round;
+        setTimeout(() => {proccessRoundEvents()})
+    }
+  }
+
+  const proccessRoundEvents = async () => {
+    isLoading = true;
+    getAllRoundTicks(fileArray, roundInfo, currentRound)
+    isLoading = false;
+  }
+
 </script>
 
 <div class="flex flex-col h-full justify-center items-center">
-	<TitleBar />
+	<TitleBar map={headers?.get('map_name')} round={currentRound} {isLoading} score="1:1" />
 
 	<div class="grow flex w-full max-w-sm justify-center items-center">
 		{#if !isLoading && !$fileStore}
@@ -64,11 +92,9 @@
 					bind:files
 				/>
 			</div>
-			<Button on:click={() => currentRound.update(v => v +1)}>Up</Button>
+			<Button on:click={() => { currentRound++ }}>Up</Button>
 		{/if}
-		{#if isLoading}
-			<p>Loading....</p>
-		{/if}
+		<div />
 		<div class="flex flex-col justify-">
 			{#if !isLoading && $fileStore}
 				{#if showPlayers}
@@ -79,8 +105,8 @@
 		</div>
 	</div>
 
-	{#if !isLoading && fileStore && showNavigation}
-		<!-- <FooterBar /> -->
+	{#if !isLoading && fileArray && showNavigation}
+		<FooterBar {scores} round={currentRound} on:click={handleFooterClick} />
 	{/if}
 </div>
 

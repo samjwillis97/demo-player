@@ -87,6 +87,7 @@ export const headersAsync = asyncable<
   [Asyncable<Uint8Array>]
 >(
   async (v: AsyncValue<Uint8Array>) => {
+    console.log("entering headers async ")
     const file = await v
     if (!file) {
       return {
@@ -103,10 +104,9 @@ export const headersAsync = asyncable<
       }
     }
 
-    console.log("ASYNC HEADER")
-    console.log(headers)
     currentRound.set(1)
 
+    console.log("returning headers async")
     return {
       isError: false,
       data: headers
@@ -121,6 +121,7 @@ export const asyncEvents = asyncable<
   [Asyncable<Uint8Array>]
 >(
   async(v: AsyncValue<Uint8Array>) => {
+    console.log('starting async events')
     const file = await v
     if (!file) return {
       isError: true,
@@ -138,8 +139,7 @@ export const asyncEvents = asyncable<
       message: "unable to parse events"
     }
 
-    console.log("ALL EVENTS")
-    console.log(allEvents)
+    console.log("finishing async events")
 
     return {
       isError: false,
@@ -155,6 +155,7 @@ export const asyncRounds = asyncable<
   [Asyncable<AsyncResponse<Map<string, unknown>[]>>]
 >(
   async(v: AsyncValue<AsyncResponse<Map<string, unknown>[]>>) => {
+    console.log("starting async rounds")
     const events = await v;
     if (events.isError) return events
 
@@ -190,9 +191,7 @@ export const asyncRounds = asyncable<
       roundEndEvents,
     }
 
-    console.log("ROUNDS")
-    console.log(rounds)
-
+    console.log("finishing async rounds")
     return {
       isError: false,
       data: rounds
@@ -207,6 +206,7 @@ export const asyncTickMap = asyncable<
   [Asyncable<Uint8Array>, Asyncable<AsyncResponse<Map<string, unknown>[]>>]
 >(
   async (asyncFile: AsyncValue<Uint8Array>, asyncEvents: AsyncValue<AsyncResponse<Map<string, unknown>[]>>) => {
+    console.log("starting async tick map")
     const file = await asyncFile
     const events = await asyncEvents
 
@@ -247,9 +247,7 @@ export const asyncTickMap = asyncable<
       }
     }
 
-    console.log('Tick Events')
-    console.log(tickMap)
-
+    console.log("finishing async tick map")
     return {
       isError: false,
       data: tickMap
@@ -265,6 +263,8 @@ AsyncResponse<{ score: string; winningSide: string; 2: number; 3: number }[]>,
 [Asyncable<AsyncResponse<roundInfo>>, Asyncable<AsyncResponse<Map<number, Map<string, unknown>[]>>>]
 >(
   async (asyncRounds: AsyncValue<AsyncResponse<roundInfo>>, asyncTicks: AsyncValue<AsyncResponse<Map<number, Map<string, unknown>[]>>>) => {
+    console.log("starting async scores")
+
     const rounds = await asyncRounds;
     const tickMap = await asyncTicks;
 
@@ -273,9 +273,7 @@ AsyncResponse<{ score: string; winningSide: string; 2: number; 3: number }[]>,
  
     const scores = getRoundScores(rounds.data.roundEndEvents, tickMap.data)
 
-    console.log("SCORES Resolved")
-    console.log(scores)
-
+    console.log("finishing async scores")
     return {
       isError: false,
       data: scores
@@ -398,10 +396,13 @@ export const roundTicks = asyncable(
     asyncRounds: AsyncValue<AsyncResponse<roundInfo>>,
     currentRound: number
   ) => {
-    console.log('starting round Ticks')
+    console.log('starting async round ticks')
     const file = await asyncFile;
     const rounds = await asyncRounds
+
     if (!file || rounds.isError) return
+    if (currentRound < 1) return
+
     const ticks = new Int32Array(
       arrayRange(
         rounds.data.roundStartEvents[currentRound - 1].get('tick') as number,
@@ -429,8 +430,7 @@ export const roundTicks = asyncable(
       }
     }
 
-    console.log('Round Tick Events')
-    console.log(tickMap)
+    console.log('finished async round ticks')
 
     return tickMap
   },
