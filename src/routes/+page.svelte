@@ -30,6 +30,7 @@
   let roundInfo: rounds;
   let scores: roundScore[];
   let eventTicks: Map<number, gameEvent[]>
+  let roundTicks: Map<number, gameEvent[]>
 
   let playerStates: playerState[];
   let sideInfo: teamNames;
@@ -93,7 +94,7 @@
 
   const proccessRoundEvents = async () => {
     isLoading = true;
-    getAllRoundTicks(fileArray, roundInfo, currentRound)
+    roundTicks = getAllRoundTicks(fileArray, roundInfo, currentRound)
     isLoading = false;
   }
 
@@ -129,7 +130,13 @@
 	</div>
 
 	{#if fileArray && showNavigation}
-		<FooterBar {scores} round={currentRound} on:click={handleFooterClick} />
+		<FooterBar
+			{scores}
+			{roundInfo}
+			{roundTicks}
+			round={currentRound}
+			on:click={handleFooterClick}
+		/>
 	{/if}
 </div>
 

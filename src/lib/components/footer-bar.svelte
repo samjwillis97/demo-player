@@ -2,10 +2,12 @@
 	import { createEventDispatcher } from "svelte";
 	import RoundNavigator from "./round-navigator.svelte";
 	import RoundPlayer from "./round-player.svelte";
-	import type { roundScore } from "$lib/utils/types";
+	import type { gameEvent, roundScore, rounds } from "$lib/utils/types";
 
-  export let round = 0
-  export let scores: roundScore[] = []
+  export let round = 0;
+  export let scores: roundScore[] = [];
+  export let roundInfo: rounds;
+  export let roundTicks: Map<number, gameEvent[]>;
 
   const dispatch = createEventDispatcher();
 
@@ -21,5 +23,5 @@
 
 <div class="flex flex-col w-full">
 	<RoundNavigator {scores} {round} on:click={handleNavigatorClick} />
-	<RoundPlayer />
+	<RoundPlayer {roundTicks} {roundInfo} {round} />
 </div>

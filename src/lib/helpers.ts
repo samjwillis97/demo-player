@@ -186,12 +186,13 @@ export const gameStateAtTick = (
   gameTicks: Map<number, Map<string, unknown>[]>,
   events?: Map<string, unknown>[]
 ) => {
+  // console.log('here')
 
   const stateAtTick = gameTicks.get(tick)
-  if (!stateAtTick) {
-    // console.log(`nothing @ ${tick}`)
-    return
-  }
+//   if (!stateAtTick) {
+//     // console.log(`nothing @ ${tick}`)
+//     return
+//   }
   // console.log(`found @ ${tick}`)
   // console.log(stateAtTick)
 }
