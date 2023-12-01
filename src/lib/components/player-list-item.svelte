@@ -1,15 +1,16 @@
 <script lang="ts">
   import * as Avatar from "$lib/components/ui/avatar";
-  import { currentTeams } from "$lib/stores/file"
+	import type { playerState, teamNames } from "$lib/utils/types";
 
-  export let player: { name: string; team: 2 | 3; }
+  export let player: playerState
+  export let currentTeams: teamNames
 
 </script>
 
-{#if player && $currentTeams}
+{#if player && currentTeams}
 	<div class="flex flex-row items-center gap-2">
 		<Avatar.Root>
-			<Avatar.Fallback>{$currentTeams[player.team].short}</Avatar.Fallback>
+			<Avatar.Fallback>{currentTeams[player.team].short}</Avatar.Fallback>
 		</Avatar.Root>
 		<p>{player.name}</p>
 	</div>

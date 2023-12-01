@@ -1,10 +1,13 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card";
 	import PlayerListItem from "$lib/components/player-list-item.svelte";
-  import { playerState, currentTeams } from "$lib/stores/file"
+	import type { playerState, teamNames } from "$lib/utils/types";
 
   const tSide = 2;
   const ctSide = 3;
+
+  export let playerStates: playerState[]
+  export let currentTeams: teamNames
 
 </script>
 
@@ -13,14 +16,14 @@
 		<Card.Title>Players</Card.Title>
 	</Card.Header>
 	<Card.Content class="h-64 overflow-y-auto">
-		{#if $currentTeams && $playerState}
+		{#if currentTeams && playerStates}
 			<div class="flex flex-col gap-2">
-				{#each $playerState.filter((v) => v.team === tSide) as player}
-					<PlayerListItem {player} />
+				{#each playerStates.filter((v) => v.team === tSide) as player}
+					<PlayerListItem {currentTeams} {player} />
 				{/each}
 				<div class="h-12" />
-				{#each $playerState.filter((v) => v.team === ctSide) as player}
-					<PlayerListItem {player} />
+				{#each playerStates.filter((v) => v.team === ctSide) as player}
+					<PlayerListItem {currentTeams} {player} />
 				{/each}
 			</div>
 		{:else}

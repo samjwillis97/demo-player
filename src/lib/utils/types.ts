@@ -38,3 +38,30 @@ export type rounds = {
 }
 
 export type gameEvent = Map<string, unknown>
+
+export type teamNames = {
+  2: {
+    short: string;
+    long: string;
+  },
+  3: {
+    short: string;
+    long: string;
+  }
+}
+
+export type playerState = {
+  steamId: string;
+  name: string;
+  team: 2 | 3;
+  health: number;
+  armor: number;
+  helmet: boolean;
+  defuser: boolean;
+  mvps: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
+  cash: number;
+}

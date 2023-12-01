@@ -33,7 +33,7 @@ export const getPlayerInfoRoundStart = (
   tickEvents: Map<number, Map<string, unknown>[]>
 ) => {
   const roundEvents = getRoundStartEvents(round, rounds, tickEvents)
-  if (!roundEvents) return undefined
+  if (!roundEvents) throw new Error ("Missing events for round start")
 
   const data = roundEvents.map((v) => (
     {
@@ -72,7 +72,7 @@ export const getPlayerInfoRoundStart = (
   ).safeParse(data)
 
   if (!parsed.success) {
-    return undefined
+    throw new Error("Unable to parse player info")
   }
 
   return parsed.data
@@ -166,6 +166,20 @@ export const isOnFinishingSide = (round: number, totalRounds: number) => {
   return (round - 24) % 6 > 3;
 }
 
+export const getCurrentTeams = (round: number, gameLength: number) => {
+  if (round > gameLength) throw new Error("Invalid round")
+
+  return {
+    2: {
+      short: teamNumberToString(2, round, gameLength),
+      long: teamNumberToLongString(2, round, gameLength)
+    },
+    3: {
+      short: teamNumberToString(3, round, gameLength),
+      long: teamNumberToLongString(3, round, gameLength)
+    }
+  }
+}
 
 export const gameStateAtTick = (
   tick: number,

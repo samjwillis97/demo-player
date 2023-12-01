@@ -4,14 +4,13 @@
   import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
   import { getRoundScores, getEventTicks, getEvents, getHeaders, getRounds, getAllRoundTicks } from "$lib/utils/file"
-  import { fileStore } from "$lib/stores/file"
 	import Button from "$lib/components/ui/button/button.svelte";
   import { Menu } from 'lucide-svelte'
 	import PlayerList from "$lib/components/player-list.svelte";
 	import FooterBar from "$lib/components/footer-bar.svelte";
   import TitleBar from "$lib/components/title-bar.svelte"
-	import RoundIndicator from "$lib/components/round-indicator.svelte";
-	import type { roundScore, rounds } from "$lib/utils/types";
+	import type { gameEvent, playerState, roundScore, rounds, teamNames } from "$lib/utils/types";
+	import { getCurrentTeams, getPlayerInfoRoundStart } from "$lib/helpers.js";
 
   let files: FileList;
   let isLoading: boolean = false;
@@ -30,6 +29,10 @@
   let headers: Map<string, string>;
   let roundInfo: rounds;
   let scores: roundScore[];
+  let eventTicks: Map<number, gameEvent[]>
+
+  let playerStates: playerState[];
+  let sideInfo: teamNames;
 
   $: playersButtonVariant = showPlayers ? "default" : "outline";
   $: showNavigationButtonVariant= showNavigation ? "default" : "outline";
@@ -49,11 +52,12 @@
       currentRound = 1;
 
       const events = getEvents(fileArray)
-      const eventTicks = getEventTicks(fileArray, events)
+      eventTicks = getEventTicks(fileArray, events)
 
       roundInfo = getRounds(events);
       scores = getRoundScores(roundInfo, eventTicks)
 
+      handleRoundChange().then();
     } finally {
       isLoading = false;
     }
@@ -63,8 +67,14 @@
     switch (event.detail.target) {
       case 'round-navigator':
         currentRound = event.detail.round;
-        setTimeout(() => {proccessRoundEvents()})
+        await handleRoundChange()
     }
+  }
+
+  const handleRoundChange = async () => {
+    playerStates = getPlayerInfoRoundStart(currentRound, roundInfo, eventTicks)
+    sideInfo = getCurrentTeams(currentRound, roundInfo.roundEndEvents.length)
+    setTimeout(() => {proccessRoundEvents()})
   }
 
   const proccessRoundEvents = async () => {
@@ -79,7 +89,7 @@
 	<TitleBar map={headers?.get('map_name')} round={currentRound} {isLoading} score="1:1" />
 
 	<div class="grow flex w-full max-w-sm justify-center items-center">
-		{#if !isLoading && !$fileStore}
+		{#if !isLoading && !fileArray}
 			<div class="flex flex-col gap-1.5">
 				<Label for="demo">Demo</Label>
 				<input
@@ -96,10 +106,10 @@
 		{/if}
 		<div />
 		<div class="flex flex-col justify-">
-			{#if !isLoading && $fileStore}
+			{#if !isLoading && fileArray}
 				{#if showPlayers}
 					<!-- I think I want this in the top left of this panel -->
-					<!-- <PlayerList /> -->
+					<PlayerList currentTeams={sideInfo} {playerStates} />
 				{/if}
 			{/if}
 		</div>
@@ -110,7 +120,7 @@
 	{/if}
 </div>
 
-{#if $fileStore}
+{#if fileArray}
 	<div class="fixed top-4 left-4">
 		<div class="flex flex-col gap-1.5">
 			<Button variant={playersButtonVariant} on:click={() => showPlayers = !showPlayers}>
