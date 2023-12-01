@@ -72,9 +72,23 @@
   }
 
   const handleRoundChange = async () => {
-    playerStates = getPlayerInfoRoundStart(currentRound, roundInfo, eventTicks)
-    sideInfo = getCurrentTeams(currentRound, roundInfo.roundEndEvents.length)
-    setTimeout(() => {proccessRoundEvents()})
+    const promises = [
+      new Promise(() => {
+        playerStates = getPlayerInfoRoundStart(currentRound, roundInfo, eventTicks)
+      }),
+      new Promise(() => {
+        sideInfo = getCurrentTeams(currentRound, roundInfo.roundEndEvents.length)
+      }),
+      new Promise(() => {
+        setTimeout(() => {proccessRoundEvents()})
+      })
+    ]
+
+    isLoading = true
+    const response = await Promise.all(promises)
+    isLoading = false
+
+    return response
   }
 
   const proccessRoundEvents = async () => {
@@ -89,7 +103,7 @@
 	<TitleBar map={headers?.get('map_name')} round={currentRound} {isLoading} score="1:1" />
 
 	<div class="grow flex w-full max-w-sm justify-center items-center">
-		{#if !isLoading && !fileArray}
+		{#if !fileArray}
 			<div class="flex flex-col gap-1.5">
 				<Label for="demo">Demo</Label>
 				<input
@@ -102,11 +116,10 @@
 					bind:files
 				/>
 			</div>
-			<Button on:click={() => { currentRound++ }}>Up</Button>
 		{/if}
 		<div />
 		<div class="flex flex-col justify-">
-			{#if !isLoading && fileArray}
+			{#if fileArray}
 				{#if showPlayers}
 					<!-- I think I want this in the top left of this panel -->
 					<PlayerList currentTeams={sideInfo} {playerStates} />
@@ -115,7 +128,7 @@
 		</div>
 	</div>
 
-	{#if !isLoading && fileArray && showNavigation}
+	{#if fileArray && showNavigation}
 		<FooterBar {scores} round={currentRound} on:click={handleFooterClick} />
 	{/if}
 </div>
