@@ -5,7 +5,7 @@
 	import { twMerge } from "tailwind-merge";
   import { getRoundScores, getEventTicks, getEvents, getHeaders, getRounds, getAllRoundTicks } from "$lib/utils/file"
 	import Button from "$lib/components/ui/button/button.svelte";
-  import { Menu } from 'lucide-svelte'
+  import { Loader2, Menu } from 'lucide-svelte'
 	import PlayerList from "$lib/components/player-list.svelte";
 	import FooterBar from "$lib/components/footer-bar.svelte";
   import TitleBar from "$lib/components/title-bar.svelte"
@@ -145,6 +145,17 @@
 			>
 				<Menu class="h-4 w-4" /> &nbsp; Nav Bar
 			</Button>
+		</div>
+	</div>
+{/if}
+
+{#if isLoading}
+	<div class="fixed top-4 right-4">
+		<div class="flex flex-row gap-1.5 items-center">
+			<div class="animate-spin">
+				<Loader2 />
+			</div>
+			<h4 class="scroll-m-20 text-xl font-semibold tracking-tight">Loading...</h4>
 		</div>
 	</div>
 {/if}

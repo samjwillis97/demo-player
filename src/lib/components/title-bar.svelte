@@ -20,7 +20,7 @@
 
 <div class="grow-0 py-4 px-3">
 	<h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-		{map ? getMapName(map) : isLoading ? 'Loading...' : title}
+		{map ? getMapName(map) : title}
 	</h1>
 	<div class="flex flex-row justify-between w-48">
 		{#if round > 0}
