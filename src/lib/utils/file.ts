@@ -63,6 +63,8 @@ export const getRounds = (events: gameEvent[]) => {
     roundEndEvents,
   }
 
+  console.log(rounds)
+
   return rounds
 }
 
@@ -171,7 +173,7 @@ export const getAllRoundTicks = (
     const tickMap = new Map<number, Map<string, unknown>[]>();
     for (const event of parsed.data) {
       const tick = event.get('tick')
-      if (typeof tick !== 'number') return undefined
+      if (typeof tick !== 'number') continue
       const events = tickMap.get(tick)
       if (!events) {
         tickMap.set(tick, [event])

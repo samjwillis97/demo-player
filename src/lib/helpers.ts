@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import type { fileRounds } from "./stores/file";
+import type { fileRounds, roundInfo } from "./stores/file";
+import type { gameEvent } from './utils/types';
 
 // at Game End
 // 1 = spectator
@@ -183,18 +184,25 @@ export const getCurrentTeams = (round: number, gameLength: number) => {
 
 export const gameStateAtTick = (
   tick: number,
-  gameTicks: Map<number, Map<string, unknown>[]>,
-  events?: Map<string, unknown>[]
+  gameTicks: Map<number, gameEvent[]>,
+  // events?: Map<string, unknown>[]
 ) => {
-  // console.log('here')
 
   const stateAtTick = gameTicks.get(tick)
-//   if (!stateAtTick) {
-//     // console.log(`nothing @ ${tick}`)
-//     return
-//   }
-  // console.log(`found @ ${tick}`)
-  // console.log(stateAtTick)
+  if (!stateAtTick) throw new Error(`Misisng Tick at ${tick}`)
+  return stateAtTick
+}
+
+export const getRoundTimeInSeconds = (
+  round: number,
+  rounds: roundInfo,
+) => {
+  if (round > rounds.roundEndEvents.length) throw new Error("Invalid round")
+
+  const startTime = z.number().parse(rounds.roundStartEvents[round - 1].get("game_time"))
+  const endTime = z.number().parse(rounds.roundEndEvents[round - 1].get("game_time"))
+
+  return endTime - startTime
 }
 
 export const arrayRange = (start: number, stop: number, step: number = 1) =>

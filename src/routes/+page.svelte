@@ -38,7 +38,6 @@
   $: playersButtonVariant = showPlayers ? "default" : "outline";
   $: showNavigationButtonVariant= showNavigation ? "default" : "outline";
 
-
   $: if (files && files.length > 0) {
     handleFile(files[0]).then();
   }
@@ -50,6 +49,7 @@
       fileArray = new Uint8Array(await file.arrayBuffer());
 
       headers = getHeaders(fileArray);
+      console.log(headers)
       currentRound = 1;
 
       const events = getEvents(fileArray)
