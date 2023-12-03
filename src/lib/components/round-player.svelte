@@ -48,16 +48,16 @@
        const currentSlider = sliderValue[0]
        if (currentSlider !== previousSliderValue) {
          previousSliderValue = currentSlider
+         updateState(currentSlider)
        }
      }
   }
 
   const nextTick = () => {
-    console.log('next tick')
-    if (!sliderValue || sliderValue.length > 0) return
+    if (!sliderValue || sliderValue.length < 1) return
 
     const tick = sliderValue[0] + 1
-    if (!tick || tick >= endTick) return
+    if (tick >= endTick) return
     sliderValue = [tick]
     try {
       updateState(tick)
@@ -67,9 +67,12 @@
   }
 
   const updateState = (tick: number) => {
-    console.log('update state')
-    currentState = gameStateAtTick(tick, roundTicks)
-    dispatch('newTick', { state: currentState })
+    try {
+      currentState = gameStateAtTick(tick, roundTicks)
+      dispatch('newTick', { state: currentState })
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   const updatePlaybackSpeed = () => {
@@ -124,7 +127,7 @@
 		</Button>
 	</div>
 	<div class="w-96 h-full pr-2">
-		<Slider class="h-full" bind:value={sliderValue} />
+		<Slider class="h-full" bind:value={sliderValue} bind:min={startTick} bind:max={endTick} />
 	</div>
 </div>
 <!-- {/if} -->
