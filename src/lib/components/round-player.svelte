@@ -4,6 +4,7 @@
 	import { Play, Pause } from "lucide-svelte";
 	import Button from "./ui/button/button.svelte";
 	import { createEventDispatcher } from "svelte";
+	import Slider from "./ui/slider/slider.svelte";
 
   export let round = 0
   export let roundTicks: Map<number, gameEvent[]>
@@ -27,6 +28,9 @@
   let currentState: gameEvent[]
   let playSetInterval: number
 
+  let previousSliderValue: number = 0
+  let sliderValue: number[]
+
   // FIXME: Problem here is any changes of dependants will trigger this to re run..
   $: {
     if (round !== previousRound && round > 0 && roundTicks) {
@@ -36,22 +40,38 @@
       totalTicks = endTick - startTick
       totalRoundTime = getRoundTimeInSeconds(round, roundInfo)
       ticksPerSecond = (totalTicks/totalRoundTime) * playbackSpeed
-      navigatorTick = startTick
+      console.log('loaded to here')
     }
   }
 
+  // $: {
+  //   console.log('slider change')
+  //   if (sliderValue && sliderValue.length > 0) {
+  //     const currentSlider = sliderValue[0]
+  //     if (currentSlider !== previousSliderValue) {
+  //       console.log('slider moved')
+  //       previousSliderValue = currentSlider
+  //     }
+  //   }
+  // }
+
   const nextTick = () => {
-    if (navigatorTick >= endTick) return
-    navigatorTick++
+    console.log('next tick')
+    if (!sliderValue || sliderValue.length > 0) return
+
+    const tick = sliderValue[0] + 1
+    if (!tick || tick >= endTick) return
+    sliderValue = [tick]
     try {
-      updateState()
+      updateState(tick)
     } catch {
       nextTick()
     }
   }
 
-  const updateState = () => {
-    currentState = gameStateAtTick(navigatorTick, roundTicks)
+  const updateState = (tick: number) => {
+    console.log('update state')
+    currentState = gameStateAtTick(tick, roundTicks)
     dispatch('newTick', { state: currentState })
   }
 
@@ -105,6 +125,9 @@
 				<Play /> &nbsp; Play
 			{/if}
 		</Button>
+	</div>
+	<div class="w-96 h-full pr-2">
+		<Slider class="h-full" />
 	</div>
 </div>
 <!-- {/if} -->
