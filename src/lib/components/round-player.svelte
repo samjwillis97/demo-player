@@ -40,20 +40,17 @@
       totalTicks = endTick - startTick
       totalRoundTime = getRoundTimeInSeconds(round, roundInfo)
       ticksPerSecond = (totalTicks/totalRoundTime) * playbackSpeed
-      console.log('loaded to here')
     }
   }
 
-  // $: {
-  //   console.log('slider change')
-  //   if (sliderValue && sliderValue.length > 0) {
-  //     const currentSlider = sliderValue[0]
-  //     if (currentSlider !== previousSliderValue) {
-  //       console.log('slider moved')
-  //       previousSliderValue = currentSlider
-  //     }
-  //   }
-  // }
+  $: {
+     if (sliderValue && sliderValue.length > 0) {
+       const currentSlider = sliderValue[0]
+       if (currentSlider !== previousSliderValue) {
+         previousSliderValue = currentSlider
+       }
+     }
+  }
 
   const nextTick = () => {
     console.log('next tick')
@@ -127,7 +124,7 @@
 		</Button>
 	</div>
 	<div class="w-96 h-full pr-2">
-		<Slider class="h-full" />
+		<Slider class="h-full" bind:value={sliderValue} />
 	</div>
 </div>
 <!-- {/if} -->
