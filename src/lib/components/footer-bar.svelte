@@ -18,10 +18,16 @@
     })
   }
 
+  const handleNewTick = (event: CustomEvent<{ state: gameEvent[] }> ) => {
+    dispatch('newTick', {
+      state: event.detail.state
+    })
+  }
+
 
 </script>
 
 <div class="flex flex-col w-full">
 	<RoundNavigator {scores} {round} on:click={handleNavigatorClick} />
-	<RoundPlayer {roundTicks} {roundInfo} {round} />
+	<RoundPlayer {roundTicks} {roundInfo} {round} on:newTick={handleNewTick} />
 </div>

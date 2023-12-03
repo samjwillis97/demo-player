@@ -10,7 +10,7 @@
 	import FooterBar from "$lib/components/footer-bar.svelte";
   import TitleBar from "$lib/components/title-bar.svelte"
 	import type { gameEvent, playerState, roundScore, rounds, teamNames } from "$lib/utils/types";
-	import { getCurrentTeams, getPlayerInfoRoundStart } from "$lib/helpers.js";
+	import { getCurrentTeams, getPlayerInfoFromState, getPlayerInfoRoundStart } from "$lib/helpers.js";
 
   let files: FileList;
   let isLoading: boolean = false;
@@ -98,6 +98,10 @@
     isLoading = false;
   }
 
+  const handleNewTick = async (event: CustomEvent<{state: gameEvent[]}>) => {
+    playerStates = getPlayerInfoFromState(event.detail.state)
+  }
+
 </script>
 
 <div class="flex flex-col h-full justify-center items-center">
@@ -136,6 +140,7 @@
 			{roundTicks}
 			round={currentRound}
 			on:click={handleFooterClick}
+			on:newTick={handleNewTick}
 		/>
 	{/if}
 </div>

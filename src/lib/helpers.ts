@@ -28,20 +28,15 @@ export const getRoundStartEvents = (round: number, rounds: fileRounds, tickEvent
   return events
 }
 
-export const getPlayerInfoRoundStart = (
-  round: number,
-  rounds: fileRounds,
-  tickEvents: Map<number, Map<string, unknown>[]>
+export const getPlayerInfoFromState = (
+  state: Map<string, unknown>[]
 ) => {
-  const roundEvents = getRoundStartEvents(round, rounds, tickEvents)
-  if (!roundEvents) throw new Error ("Missing events for round start")
-
-  const data = roundEvents.map((v) => (
+  const data = state.map((v) => (
     {
       steamId: v.get('player_steamid'),
       name: v.get('player_name'),
       team: v.get('team_num'),
-      health: v.get('health') ?? false,
+      health: v.get('health') ?? 0,
       armor: v.get('armor_value') ?? 0,
       helmet: v.get('has_helmet') ?? false,
       defuser: v.get('has_defuser') ?? false,
@@ -58,7 +53,7 @@ export const getPlayerInfoRoundStart = (
     z.object({
       steamId: z.string(),
       name: z.string(),
-      team: z.literal(2).or(z.literal(3)),
+      team: z.optional(z.literal(2).or(z.literal(3))),
       health: z.number(),
       armor: z.number(),
       helmet: z.boolean(),
@@ -73,10 +68,22 @@ export const getPlayerInfoRoundStart = (
   ).safeParse(data)
 
   if (!parsed.success) {
+    console.log(data)
     throw new Error("Unable to parse player info")
   }
 
   return parsed.data
+}
+
+export const getPlayerInfoRoundStart = (
+  round: number,
+  rounds: fileRounds,
+  tickEvents: Map<number, Map<string, unknown>[]>
+) => {
+  const roundEvents = getRoundStartEvents(round, rounds, tickEvents)
+  if (!roundEvents) throw new Error ("Missing events for round start")
+
+  return getPlayerInfoFromState(roundEvents)
 }
 
 export const getRoundEndTicks = (
