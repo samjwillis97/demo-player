@@ -16,8 +16,7 @@
     }
   }>();
 
-  let previousRound = 0
-  let navigatorTick = 0
+  let currentRound = 0
   let startTick = 0
   let endTick = 0
   let totalTicks = 0
@@ -33,13 +32,16 @@
 
   // FIXME: Problem here is any changes of dependants will trigger this to re run..
   $: {
-    if (round !== previousRound && round > 0 && roundTicks) {
+    if (round !== currentRound && round > 0 && roundTicks) {
+      currentRound = round
       const roundIndex = round - 1
+
       startTick = roundInfo.roundStartEvents[roundIndex].get('tick') as number
       endTick = roundInfo.roundEndEvents[roundIndex].get('tick') as number
+
       totalTicks = endTick - startTick
       totalRoundTime = getRoundTimeInSeconds(round, roundInfo)
-      ticksPerSecond = (totalTicks/totalRoundTime) * playbackSpeed
+      setTickRate()
     }
   }
 
@@ -82,6 +84,16 @@
     if (nextSpeedIndex >= validSpeeds.length) nextSpeedIndex = 0
 
     playbackSpeed = validSpeeds[nextSpeedIndex]
+    setTickRate()
+
+    if (isPlaying) {
+      togglePlay()
+      togglePlay()
+    }
+  }
+
+  const setTickRate = () => {
+    ticksPerSecond = (totalTicks/totalRoundTime) * playbackSpeed
   }
 
   const togglePlay = () => {
@@ -104,30 +116,26 @@
 </script>
 
 <!-- {#if $rounds} -->
-<div class="flex flex-row w-full h-10 justify-between gap-10">
-	<div class="flex flex-row justify-center items-center gap-5">
-		<p>
-			Start Tick: {startTick}
-		</p>
-		<p>
-			End Tick: {endTick}
-		</p>
-		<p>
-			Current Tick: {navigatorTick}
-		</p>
+{#if round && totalTicks > 0}
+	<div class="flex flex-row w-full h-10 justify-between gap-10">
+		<div class="grow-0 w-96 flex flex-row justify-center items-center gap-5">
+			<Button on:click={updatePlaybackSpeed}>{playbackSpeed}x Speed</Button>
+			<Button on:click={togglePlay}>
+				{#if isPlaying}
+					<Pause /> &nbsp; Pause
+				{:else}
+					<Play /> &nbsp; Play
+				{/if}
+			</Button>
+		</div>
+		<div class="grow h-full pr-2">
+			<Slider
+				class="h-full w-full"
+				bind:value={sliderValue}
+				bind:min={startTick}
+				bind:max={endTick}
+			/>
+		</div>
 	</div>
-	<div class="flex flex-row justify-center items-center gap-5">
-		<Button on:click={updatePlaybackSpeed}>{playbackSpeed}x Speed</Button>
-		<Button on:click={togglePlay}>
-			{#if isPlaying}
-				<Pause /> &nbsp; Pause
-			{:else}
-				<Play /> &nbsp; Play
-			{/if}
-		</Button>
-	</div>
-	<div class="w-96 h-full pr-2">
-		<Slider class="h-full" bind:value={sliderValue} bind:min={startTick} bind:max={endTick} />
-	</div>
-</div>
+{/if}
 <!-- {/if} -->
