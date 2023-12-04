@@ -4,7 +4,6 @@
 	import { Play, Pause } from "lucide-svelte";
 	import Button from "./ui/button/button.svelte";
 	import { createEventDispatcher } from "svelte";
-	import Slider from "./ui/slider/slider.svelte";
 
   export let round = 0
   export let roundTicks: Map<number, gameEvent[]>
@@ -27,45 +26,58 @@
   let currentState: gameEvent[]
   let playSetInterval: number
 
-  let previousSliderValue: number = 0
-  let sliderValue: number[]
+
+  let currentTick = 0
+  let progressPercentage: number = 0
+
+  let totalWidth: number
+
+  let isMouseDragging = false
 
   // FIXME: Problem here is any changes of dependants will trigger this to re run..
   $: {
     if (round !== currentRound && round > 0 && roundTicks) {
       currentRound = round
       const roundIndex = round - 1
-
-      startTick = roundInfo.roundStartEvents[roundIndex].get('tick') as number
+      
       endTick = roundInfo.roundEndEvents[roundIndex].get('tick') as number
+      startTick = roundInfo.roundStartEvents[roundIndex].get('tick') as number
+
+      currentTick = startTick
 
       totalTicks = endTick - startTick
       totalRoundTime = getRoundTimeInSeconds(round, roundInfo)
+
       setTickRate()
+      updateProgess()
     }
   }
 
-  $: {
-     if (sliderValue && sliderValue.length > 0) {
-       const currentSlider = sliderValue[0]
-       if (currentSlider !== previousSliderValue) {
-         previousSliderValue = currentSlider
-         updateState(currentSlider)
-       }
-     }
+  const setTickByPercentage = (percentage: number) => {
+    currentTick = Math.round(totalTicks * (percentage / 100)) + startTick
   }
 
-  const nextTick = () => {
-    if (!sliderValue || sliderValue.length < 1) return
+  const getProgressPercentage = () => {
+    return ((currentTick - startTick) / totalTicks) * 100
+  }
 
-    const tick = sliderValue[0] + 1
-    if (tick >= endTick) return
-    sliderValue = [tick]
+  const updateProgess = () => {
+    progressPercentage = getProgressPercentage()
+  }
+
+  const getCurrentTick = () => {
     try {
-      updateState(tick)
+      updateState(currentTick)
     } catch {
       nextTick()
     }
+  }
+
+  const nextTick = () => {
+    currentTick++
+    if (currentTick >= endTick) return
+    updateProgess()
+    getCurrentTick()
   }
 
   const updateState = (tick: number) => {
@@ -113,7 +125,44 @@
       nextTick()
     }, interval)
   }
+
+  const handlePlayedClick = (e: MouseEvent) => {
+    const selectedPercentage = (e.offsetX / totalWidth) * 100
+    setTickByPercentage(selectedPercentage)
+    updateProgess()
+    getCurrentTick()
+  }
+
+  const handleUnplayedClick = (e: MouseEvent) => {
+    const playedPercentage = getProgressPercentage()
+    const unplayedPercentage = (e.offsetX / totalWidth) * 100
+    setTickByPercentage(playedPercentage + unplayedPercentage)
+    updateProgess()
+    getCurrentTick()
+  }
+
+  const handleMouseUp = () => {
+    isMouseDragging = false
+  }
+
+  const handleMouseDown = () => {
+    isMouseDragging = true
+  }
+
+  const handlePlayedMouseMove = (e: MouseEvent) => {
+    if (!isMouseDragging) return
+    handlePlayedClick(e)
+  }
+
+  const handleUnplayedMouseMove = (e: MouseEvent) => {
+    if (!isMouseDragging) return
+    handleUnplayedClick(e)
+  }
 </script>
+
+<!-- eslint-disable svelte/valid-compile -->
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 
 <!-- {#if $rounds} -->
 {#if round && totalTicks > 0}
@@ -128,12 +177,21 @@
 				{/if}
 			</Button>
 		</div>
-		<div class="grow h-full pr-2">
-			<Slider
-				class="h-full w-full"
-				bind:value={sliderValue}
-				bind:min={startTick}
-				bind:max={endTick}
+		<div class="grow h-full flex flex-row" bind:clientWidth={totalWidth}>
+			<span
+				class="bg-stone-500"
+				style={`width: ${progressPercentage}%;`}
+				on:click={handlePlayedClick}
+				on:mouseup={handleMouseUp}
+				on:mousedown={handleMouseDown}
+				on:mousemove={handlePlayedMouseMove}
+			/>
+			<span
+				class="bg-stone-800 grow"
+				on:click={handleUnplayedClick}
+				on:mouseup={handleMouseUp}
+				on:mousedown={handleMouseDown}
+				on:mousemove={handleUnplayedMouseMove}
 			/>
 		</div>
 	</div>

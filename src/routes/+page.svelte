@@ -67,35 +67,37 @@
   const handleFooterClick = async (event: CustomEvent<{target: 'round-navigator'; round: number }> ) => {
     switch (event.detail.target) {
       case 'round-navigator':
+        console.log("clicked")
         currentRound = event.detail.round;
+        console.log(currentRound)
         await handleRoundChange()
     }
   }
 
   const handleRoundChange = async () => {
-    const promises = [
-      new Promise(() => {
-        playerStates = getPlayerInfoRoundStart(currentRound, roundInfo, eventTicks)
-      }),
-      new Promise(() => {
-        sideInfo = getCurrentTeams(currentRound, roundInfo.roundEndEvents.length)
-      }),
-      new Promise(() => {
-        setTimeout(() => {proccessRoundEvents()})
-      })
-    ]
+    console.log("created promises")
 
     isLoading = true
-    const response = await Promise.all(promises)
+    await Promise.all([
+      new Promise<void>((resolve, reject) => {
+        playerStates = getPlayerInfoRoundStart(currentRound, roundInfo, eventTicks)
+        resolve()
+      }),
+      new Promise<void>((resolve, reject) => {
+        sideInfo = getCurrentTeams(currentRound, roundInfo.roundEndEvents.length)
+        resolve()
+      }),
+      proccessRoundEvents()
+    ])
     isLoading = false
 
-    return response
+    return
   }
 
   const proccessRoundEvents = async () => {
-    isLoading = true;
+    console.log(3)
     roundTicks = getAllRoundTicks(fileArray, roundInfo, currentRound)
-    isLoading = false;
+    console.log(3, "and done")
   }
 
   const handleNewTick = async (event: CustomEvent<{state: gameEvent[]}>) => {

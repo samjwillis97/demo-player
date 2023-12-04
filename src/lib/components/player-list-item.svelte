@@ -5,12 +5,6 @@
   export let player: playerState
   export let currentTeams: teamNames
 
-  let width = 0
-
-  $: {
-    width = player.health
-  }
-
 </script>
 
 {#if player && currentTeams}
@@ -21,8 +15,7 @@
 			</Avatar.Root>
 			<p>{player.name}</p>
 		</div>
-		{#if width > 0}
-			<div class={`bg-sky-500/30 h-2 w-[${width}%]`} />
-		{/if}
+		<div class="bg-amber-500/30 h-1" style={`width: ${player.armor ?? 0}%;`} />
+		<div class="bg-sky-500/30 h-2" style={`width: ${player.health ?? 0}%;`} />
 	</div>
 {/if}
