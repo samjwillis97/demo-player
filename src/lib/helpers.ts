@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { fileRounds, roundInfo } from "./stores/file";
 import type { gameEvent } from './utils/types';
+import metadata from '$lib/assets/metadata.json';
 
 // at Game End
 // 1 = spectator
@@ -217,3 +218,33 @@ export const arrayRange = (start: number, stop: number, step: number = 1) =>
     { length: (stop - start) / step + 1 },
     (value, index) => start + index * step
     );
+
+export const formatMapName = (originalName: string) => {
+  switch (originalName) {
+    case 'de_mirage':
+      return "Mirage";
+    case 'de_vertigo':
+      return "Vertigo";
+  }
+
+  return "Unknown Map: " + originalName
+}
+
+export const getRadarPath = (originalMapName: string) => {
+  // idk bout this
+  return `$lib/assets/${originalMapName}_radar_psd.png`
+}
+
+export const getMapXYLimits = (originalMapName: string) => {
+  // FIXME: would be good to type the originalMapName better
+  // @ts-expect-error haven't validated properly
+  const limits = metadata[originalMapName]
+  const schema = z.array(z.number()).length(4).parse(limits)
+
+  return {
+    topLeftX: schema[0],
+    topLeftY: schema[1],
+    bottomLeftX: schema[2],
+    bottomLeftY: schema[3],
+  }
+}

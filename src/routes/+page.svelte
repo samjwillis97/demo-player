@@ -104,6 +104,8 @@
     playerStates = getPlayerInfoFromState(event.detail.state)
   }
 
+  // Layout, could be nice to have players on the left and right with map in the middle and nav down the bottom
+
 </script>
 
 <div class="flex flex-col h-full justify-center items-center">

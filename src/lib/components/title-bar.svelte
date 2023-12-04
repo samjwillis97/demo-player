@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { formatMapName, getMapXYLimits } from "$lib/helpers";
+
   export let round = 0;
   export let isLoading: boolean = false;
   export let map: string | undefined;
@@ -6,21 +8,11 @@
 
   let title: string = "Sam's Demo Player";
 
-  const getMapName = (originalName: string) => {
-    switch (originalName) {
-      case 'de_mirage':
-        return "Mirage";
-      case 'de_vertigo':
-        return "Vertigo";
-    }
-    return "Unknown Map: " + originalName
-  }
-
 </script>
 
 <div class="grow-0 py-4 px-3">
 	<h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-		{map ? getMapName(map) : title}
+		{map ? formatMapName(map) : title}
 	</h1>
 	<div class="flex flex-row justify-between w-48">
 		{#if round > 0}
