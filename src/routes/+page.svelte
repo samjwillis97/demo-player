@@ -11,6 +11,7 @@
   import TitleBar from "$lib/components/title-bar.svelte"
 	import type { gameEvent, playerState, roundScore, rounds, teamNames } from "$lib/utils/types";
 	import { getCurrentTeams, getPlayerInfoFromState, getPlayerInfoRoundStart } from "$lib/helpers.js";
+	import MapPlayer from "$lib/components/map-player.svelte";
 
   let files: FileList;
   let isLoading: boolean = false;
@@ -111,9 +112,9 @@
 <div class="flex flex-col h-full justify-center items-center">
 	<TitleBar map={headers?.get('map_name')} round={currentRound} {isLoading} score="1:1" />
 
-	<div class="grow flex w-full max-w-sm justify-center items-center">
+	<div class="grow flex w-full justify-center items-center">
 		{#if !fileArray}
-			<div class="flex flex-col gap-1.5">
+			<div class="flex flex-col max-w-sm gap-1.5">
 				<Label for="demo">Demo</Label>
 				<input
 					disabled={isLoading}
@@ -125,16 +126,18 @@
 					bind:files
 				/>
 			</div>
-		{/if}
-		<div />
-		<div class="flex flex-col justify-">
-			{#if fileArray}
-				{#if showPlayers}
-					<!-- I think I want this in the top left of this panel -->
-					<PlayerList currentTeams={sideInfo} {playerStates} />
+		{:else}
+			<div class="flex flex-col w-full h-full">
+				{#if fileArray}
+					{#if showPlayers}
+						<!-- I think I want this in the top left of this panel -->
+						<PlayerList currentTeams={sideInfo} {playerStates} />
+					{:else}
+						<MapPlayer />
+					{/if}
 				{/if}
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</div>
 
 	{#if fileArray && showNavigation}
