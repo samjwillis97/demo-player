@@ -8,19 +8,20 @@ export const eventsToTrack = [
 ];
 
 export const tickEventsToTrack = [
-  "X", "Y", "Z", "pitch", "yaw",
+  "X", "Y", "Z", 
+  // "pitch", "yaw",
   "velocity_X", "velocity_Y", "velocity_Z",
-  "has_defuser",
-  "armor_value", "has_helmet",
-  "health",
-  "balance",
-  "equipment_value_this_round", "cash_spent_this_round",
-  "is_alive", "team_num", "player_name", 
-  "kills_total", "assists_total", "damage_total",
-  "deaths_total", "mvps", "headshot_kills_total", "score",
-  "team_rounds_total",
-  "player_steamid",
-  "inventory"
+  // "has_defuser",
+  // "armor_value", "has_helmet",
+  // "health",
+  // "balance",
+  // "equipment_value_this_round", "cash_spent_this_round",
+  // "is_alive", "team_num", "player_name", 
+  // "kills_total", "assists_total", "damage_total",
+  // "deaths_total", "mvps", "headshot_kills_total", "score",
+  // "team_rounds_total",
+  // "player_steamid",
+  // "inventory",
 ];
 
 export type roundScore = {

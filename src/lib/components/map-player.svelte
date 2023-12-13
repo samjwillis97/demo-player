@@ -1,7 +1,9 @@
 <script lang="ts">
+	import type { playerState } from '$lib/utils/types';
 	import { onMount } from 'svelte';
   import { Canvas, Layer, type Render } from 'svelte-canvas';
-	import { spring } from 'svelte/motion';
+
+  export let playerStates: playerState[]
 
   let background: HTMLImageElement
   let backgroundLoaded = false
@@ -19,19 +21,21 @@
     context.drawImage(background, 0, 0, width - 1, height - 1);
   };
 
-  const playerRadius = spring(1, {stiffness: 0.15, damping: 0.3 })
-  $: playerRadius.set(40)
+  const renderPlayers = (states: playerState[]): Render => {
+    console.log(states)
+    return ({ context, width, height }) => {
+      context.fillStyle = 'tomato';
+      context.beginPath()
 
-  const renderPlayers : Render = ({ context, width, height }) => {
-    context.fillStyle = 'tomato';
-    context.beginPath()
-    context.arc(100, 100, $playerRadius, 0, 2 * Math.PI)
-    context.fill()
-  };
+      // FIXME: Radius may need to be based on screen size
+      context.arc(100, 100, 8, 0, 2 * Math.PI)
+      context.fill()
+    };
+  }
 
   $: render = renderBackground
 
-  $: playersRender = renderPlayers
+  $: playersRender = renderPlayers(playerStates)
 
 </script>
 

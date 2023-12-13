@@ -32,6 +32,7 @@ export const getRoundStartEvents = (round: number, rounds: fileRounds, tickEvent
 export const getPlayerInfoFromState = (
   state: Map<string, unknown>[]
 ) => {
+  console.log(state)
   const data = state.map((v) => (
     {
       steamId: v.get('player_steamid'),
