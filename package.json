@@ -9,7 +9,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"fix": "node ./scripts/fix.js"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^2.0.0",
@@ -37,6 +38,7 @@
 		"@sveltejs/adapter-static": "^2.0.3",
 		"bits-ui": "^0.9.8",
 		"clsx": "^2.0.0",
+		"demoparser2": "^0.15.0",
 		"gh-pages": "^6.1.0",
 		"lucide-svelte": "^0.292.0",
 		"mode-watcher": "^0.1.1",
@@ -45,6 +47,7 @@
 		"svelte-canvas": "^1.0.2",
 		"tailwind-merge": "^2.0.0",
 		"tailwind-variants": "^0.1.18",
+		"vite-plugin-wasm-pack": "^0.1.12",
 		"zod": "^3.22.4"
 	}
 }

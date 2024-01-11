@@ -1,7 +1,7 @@
 <script lang="ts">
-  import initSync from "../demoparser/pkg/demoparser2.js";
-  import { Label } from "$lib/components/ui/label";
+  import init from "demoparser2";
   import { onMount } from "svelte";
+  import { Label } from "$lib/components/ui/label";
 	import { twMerge } from "tailwind-merge";
   import { getRoundScores, getEventTicks, getEvents, getHeaders, getRounds, getAllRoundTicks } from "$lib/utils/file"
 	import Button from "$lib/components/ui/button/button.svelte";
@@ -18,11 +18,18 @@
 
   let playersButtonVariant: "default" | "outline" = "default";
   let showNavigationButtonVariant: "default" | "outline" = "default";
-  let showPlayers: boolean = true;
+  let showPlayers: boolean = false;
   let showNavigation: boolean = true;
 
-  onMount(() => {
-    initSync();
+  onMount(async () => {
+    await init()
+    // init()
+    //   .catch((err) => {
+    //     console.log(err)
+    //   })
+    //   .finally(() => {
+    //     isLoading = false
+    //   });
   });
 
   let currentRound: number = 0;
@@ -45,6 +52,9 @@
 
   const handleFile = async (file: File) => {
     if (!files || files.length === 0) return;
+
+    if (isLoading) return
+
     isLoading = true;
     try {
       fileArray = new Uint8Array(await file.arrayBuffer());
@@ -133,7 +143,7 @@
 						<!-- I think I want this in the top left of this panel -->
 						<PlayerList currentTeams={sideInfo} {playerStates} />
 					{:else}
-						<MapPlayer />
+						<MapPlayer {playerStates} />
 					{/if}
 				{/if}
 			</div>

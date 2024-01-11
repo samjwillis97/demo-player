@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { parseEvents, parseHeader, parseTicks } from "../../demoparser/pkg/demoparser2";
+import { parseEvents, parseHeader, parseTicks } from "demoparser2";
 import { eventsToTrack, tickEventsToTrack, type gameEvent, type rounds } from "./types";
 import { arrayRange, getCTSideNumber, getRoundEndTicks, getTSideNumber } from "$lib/helpers";
 
@@ -81,6 +81,10 @@ export const getEventTicks = (file: Uint8Array, events: gameEvent[]) => {
     tickEventsToTrack,
     ticks
   );
+
+  console.log(tickEventsToTrack)
+  console.log(tickEvents)
+  console.log(tickEventsToTrack.length)
 
   const parsed = z.array(z.map(z.string(), z.unknown())).safeParse(tickEvents)
   if (!parsed.success) throw new Error('Unable to parse event ticks')
