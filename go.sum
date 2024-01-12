@@ -1,0 +1,4 @@
+github.com/teamortix/golang-wasm v0.0.0-20230719150929-5d000994c833 h1:2nzs7eyRk6+DkGsjJ4wLkr5FqOUlK70k0z+4n6edPu8=
+github.com/teamortix/golang-wasm v0.0.0-20230719150929-5d000994c833/go.mod h1:LzHyzfwMJtsRlzojKNlDsPWOAwIHFFsu+Kk4zLZSY9M=
+github.com/teamortix/golang-wasm/wasm v0.0.0-20230719150929-5d000994c833 h1:PE/ebx5HZAsK42Bs/syRaSWBInfZpj9RifI/sEhGHvo=
+github.com/teamortix/golang-wasm/wasm v0.0.0-20230719150929-5d000994c833/go.mod h1:nskvTyoGIaAsC+664SkRitVI1ft6dm1xerCr50YZsnY=
