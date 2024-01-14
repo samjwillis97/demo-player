@@ -42,6 +42,7 @@ func parseFile(this js.Value, data js.Value) interface{} {
 	header, err := parser.ParseHeader()
 	checkError(err)
 
+  // https://github.com/markus-wa/demoinfocs-golang/issues/435#issuecomment-1762961645
 	fmt.Println("map: " + header.MapName)
 
 	err = parser.ParseToEnd()
