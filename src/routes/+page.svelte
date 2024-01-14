@@ -1,12 +1,7 @@
 <script lang="ts">
   import { Label } from "$lib/components/ui/label";
-  import { onMount } from "svelte";
   import { twMerge } from "tailwind-merge";
   import parser from "../demoparser/main.go";
-
-  onMount(async () => {
-    console.log(await parser.test());
-  });
 
   let isLoading: boolean = false
   let files: FileList
@@ -19,8 +14,10 @@
     if (!files || files.length === 0) return;
     isLoading = true;
 
+
     const fileBuffer = await file.arrayBuffer();
     console.log(await parser.passFileToGo(fileBuffer));
+    console.log(await parser.parseFile(new Uint8Array(fileBuffer)))
 
     isLoading = false;
   }

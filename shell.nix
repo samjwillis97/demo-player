@@ -18,10 +18,11 @@ pkgs.mkShell {
     export GO111MODULE=on
     export GOARCH=wasm
     export GOOS=js
-    export GOPATH=/usr/local/go/bin
+    export GOPATH=$HOME/go
+    export GOBIN=$GOPATH/bin
     export GOROOT=/usr/local/go
     # export GOCACHE=/tmp/gocache
-    export GOMODCACHE=/tmp/gomodcache
+    # export GOMODCACHE=/tmp/gomodcache
     # export GOPROXY="https://proxy.golang.org,direct"
 
     # export MSYS_NO_PATHCONV=1
