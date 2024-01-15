@@ -2,11 +2,11 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"syscall/js"
 
 	dem "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs"
+	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/msgs2"
 	"github.com/teamortix/golang-wasm/wasm"
 )
 
@@ -39,23 +39,22 @@ func parseFile(this js.Value, data js.Value) interface{} {
 	b := bytes.NewBuffer(uint8ArrayToBytes(data))
 	parser := dem.NewParser(b)
 
-	header, err := parser.ParseHeader()
-	checkError(err)
+	defer parser.Close()
 
-  // https://github.com/markus-wa/demoinfocs-golang/issues/435#issuecomment-1762961645
-	fmt.Println("map: " + header.MapName)
+	// https://github.com/markus-wa/demoinfocs-golang/issues/435#issuecomment-1762961645
+	mapName := "Unknown"
 
-	err = parser.ParseToEnd()
-	checkError(err)
+	parser.RegisterNetMessageHandler(func(msg *msgs2.CSVCMsg_ServerInfo) {
+		mapName = *msg.MapName
+		parser.Cancel()
+	})
 
-	fmt.Println("parsed")
-
-	players := parser.GameState().Participants().Playing()
-	for _, p := range players {
-		fmt.Println(p.Name)
+	err := parser.ParseToEnd()
+	if err != nil && err != dem.ErrCancelled {
+		checkError(err)
 	}
 
-	return header
+	return mapName
 }
 
 func uint8ArrayToBytes(value js.Value) []byte {

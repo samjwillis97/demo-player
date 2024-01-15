@@ -16,7 +16,6 @@
 
 
     const fileBuffer = await file.arrayBuffer();
-    console.log(await parser.passFileToGo(fileBuffer));
     console.log(await parser.parseFile(new Uint8Array(fileBuffer)))
 
     isLoading = false;
