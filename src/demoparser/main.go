@@ -2,10 +2,14 @@ package main
 
 import (
 	"bytes"
+	"errors"
+	// "fmt"
 	"log"
 	"syscall/js"
 
 	dem "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs"
+	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/common"
+	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/events"
 	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/msgs2"
 	"github.com/teamortix/golang-wasm/wasm"
 )
@@ -15,6 +19,8 @@ const (
 	msgQueueBufferSize = 128 * 1024
 )
 
+var fileBytes *bytes.Buffer = nil
+
 func main() {
 	c := make(chan struct{}, 0)
 
@@ -23,8 +29,10 @@ func main() {
 	}
 
 	wasm.Expose("checkVariables", checkVariables)
-	wasm.Expose("passFileToGo", passFileToGo)
-	wasm.Expose("parseFile", parseFile)
+
+	wasm.Expose("openFile", openFile)
+	wasm.Expose("getMapName", getMapName)
+	wasm.Expose("getRoundInfo", getRoundInfo)
 
 	wasm.Ready()
 
@@ -35,26 +43,59 @@ func checkVariables(this js.Value, p js.Value) interface{} {
 	return p
 }
 
-func parseFile(this js.Value, data js.Value) interface{} {
-	b := bytes.NewBuffer(uint8ArrayToBytes(data))
-	parser := dem.NewParser(b)
+func openFile(this js.Value, data js.Value) bool {
+	fileBytes = bytes.NewBuffer(uint8ArrayToBytes(data))
+	return true
+}
 
-	defer parser.Close()
-
-	// https://github.com/markus-wa/demoinfocs-golang/issues/435#issuecomment-1762961645
+func getMapName() string {
 	mapName := "Unknown"
 
+	parser, err := getParser()
+	defer parser.Close()
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// https://github.com/markus-wa/demoinfocs-golang/issues/435#issuecomment-1762961645
 	parser.RegisterNetMessageHandler(func(msg *msgs2.CSVCMsg_ServerInfo) {
 		mapName = *msg.MapName
 		parser.Cancel()
 	})
 
-	err := parser.ParseToEnd()
+	err = parser.ParseToEnd()
 	if err != nil && err != dem.ErrCancelled {
 		checkError(err)
 	}
 
 	return mapName
+}
+
+func getRoundInfo() []string {
+	parser, err := getParser()
+	defer parser.Close()
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	roundInfo := make([]string, 0)
+
+	parser.RegisterEventHandler(func(e events.RoundEnd) {
+		// state := parser.GameState()
+		switch e.Winner {
+		case common.TeamTerrorists:
+			roundInfo = append(roundInfo, "T")
+		case common.TeamCounterTerrorists:
+			roundInfo = append(roundInfo, "CT")
+		}
+	})
+
+	err = parser.ParseToEnd()
+	checkError(err)
+
+	return roundInfo
 }
 
 func uint8ArrayToBytes(value js.Value) []byte {
@@ -63,24 +104,16 @@ func uint8ArrayToBytes(value js.Value) []byte {
 	return s
 }
 
-func passFileToGo(this js.Value, p js.Value) (interface{}, error) {
-	typedArray := js.Global().Get("Uint8Array").New(p)
-	dataArray := make([]byte, typedArray.Length())
-	js.CopyBytesToGo(dataArray, typedArray)
-
-	reader := bytes.NewReader(dataArray)
-	parser := dem.NewParser(reader)
-
-	header, err := parser.ParseHeader()
-
-	if err != nil {
-		return nil, err
-	}
-	return header, nil
-}
-
 func checkError(err error) {
 	if err != nil {
-		log.Panic(err)
+		log.Panic(err.Error())
 	}
+}
+
+func getParser() (dem.Parser, error) {
+	if fileBytes == nil {
+		return nil, errors.New("parse is nil")
+	}
+
+	return dem.NewParser(bytes.NewReader(fileBytes.Bytes())), nil
 }

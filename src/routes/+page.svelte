@@ -16,7 +16,9 @@
 
 
     const fileBuffer = await file.arrayBuffer();
-    console.log(await parser.parseFile(new Uint8Array(fileBuffer)))
+    await parser.openFile(new Uint8Array(fileBuffer))
+    console.log(await parser.getMapName())
+    console.log(await parser.getRoundInfo())
 
     isLoading = false;
   }
